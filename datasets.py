@@ -27,6 +27,7 @@ class RandomImageDataset(Dataset):
         # Bonus if you make sure to always return the same image for the
         # same index (make it deterministic per index), but don't mess-up
         # RNG state outside this method.
+	#new remark by Roman
         np.random.seed(index)
         torch.manual_seed(index)
         image = torch.randint(low=0, high=255, size=self.image_dim)
