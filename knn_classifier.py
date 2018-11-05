@@ -38,6 +38,7 @@ class KNNClassifier(object):
 
         # Calculate distances between training and test samples
         dist_matrix = self.calc_distances(x_test)
+        dist_matrix = dist_matrix.numpy()
 
         # TODO: Implement k-NN class prediction based on distance matrix.
         # For each training sample we'll look for it's k-nearest neighbors.
@@ -51,11 +52,11 @@ class KNNClassifier(object):
             # TODO:
             # - Find indices of k-nearest neighbors of test sample i
             # - Set y_pred[i] to the most common class among them
-
-            # ====== YOUR CODE: ======
-            raise NotImplementedError()
-            # ========================
-
+            test_dist = dist_matrix[:, i]
+            idx = np.argsort(test_dist)[:self.k]
+            idx_label = self.y_train[idx]
+            counts = np.bincount(idx_label)
+            y_pred[i] = torch.from_numpy(np.array(np.argmax(counts)))
         return y_pred
 
     def calc_distances(self, x_test: Tensor):
@@ -78,11 +79,12 @@ class KNNClassifier(object):
         # - Full credit will be given for a fully vectorized implementation
         #   (zero explicit loops). Hint: Open the expression (a-b)^2.
 
-        dists = torch.tensor([])
-        # ====== YOUR CODE: ======
-        raise NotImplementedError()
-        # ========================
-
+        x = self.x_train
+        y = x_test
+        x2 = torch.sum(x ** 2, dim=1, keepdim=True) # size(n_train x 1)
+        y2 = torch.sum(y ** 2, dim=1) # size(1 x n_test)
+        xy = x @ y.t() # n_train x n_test
+        dists = torch.sqrt(x2 + y2 -2*xy)
         return dists
 
 
@@ -99,9 +101,9 @@ def accuracy(y: Tensor, y_pred: Tensor):
 
     # TODO: Calculate prediction accuracy. Don't use an explicit loop.
 
-    accuracy = None
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    correct_num = int((y == y_pred).sum())
+    accuracy = correct_num / y.shape[0]
     # ========================
 
     return accuracy
