@@ -30,10 +30,13 @@ def create_train_validation_loaders(dataset: Dataset, validation_ratio,
 
     # ====== YOUR CODE: ======
     len_valid = int(validation_ratio * len(dataset))
-    len_train = len(dataset) - len_valid
+    # len_train = len(dataset) - len_valid
 
-    sam_valid = sampler.SubsetRandomSampler([i for i in range(len_train, len_train + len_valid)])
-    sam_train = sampler.SubsetRandomSampler([i for i in range(len_train)])
+    idx = [i for i in range(len(dataset))]
+    np.random.shuffle(idx)
+
+    sam_valid = sampler.SubsetRandomSampler(idx[:len_valid])
+    sam_train = sampler.SubsetRandomSampler(idx[len_valid:])
 
     # ds_train = SubDs(dataset, len_train, 0)
     # ds_valid = SubDs(dataset, len_valid, len_train)

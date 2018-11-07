@@ -103,10 +103,10 @@ def accuracy(y: Tensor, y_pred: Tensor):
 
     # ====== YOUR CODE: ======
     correct_num = int((y == y_pred).sum())
-    accuracy = correct_num / y.shape[0]
+    res = correct_num / y.shape[0]
     # ========================
 
-    return accuracy
+    return res
 
 
 def find_best_k(ds_train: Dataset, k_choices, num_folds):
@@ -122,9 +122,24 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
     """
 
     accuracies = []
+    validation_ratio = 1/num_folds
 
     for i, k in enumerate(k_choices):
         model = KNNClassifier(k)
+
+        acc_model = []
+
+        for _ in range(num_folds):
+
+            dl_train, dl_valid = dataloaders.create_train_validation_loaders(ds_train, validation_ratio)
+            x_valid, y_valid = dataloader_utils.flatten(dl_valid)
+            model.train(dl_train)
+            y_pred = model.predict(x_valid)
+
+            # Calculate accuracy
+            acc_model.append(accuracy(y_valid, y_pred))
+
+        accuracies.append(acc_model)
 
         # TODO: Train model num_folds times with different train/val data.
         # Don't use any third-party libraries.
@@ -133,7 +148,6 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
         # different split each iteration), or implement something else.
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
         # ========================
 
     best_k_idx = np.argmax([np.mean(acc) for acc in accuracies])
