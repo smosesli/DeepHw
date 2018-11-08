@@ -21,9 +21,10 @@ class LinearClassifier(object):
         # TODO: Create weights tensor of appropriate dimensions
         # Initialize it from a normal dist with zero mean and the given std.
 
-        self.weights = None
+
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+
+        self.weights = torch.randn(n_features, n_classes,) * weight_std
         # ========================
 
     def predict(self, x: Tensor):
@@ -42,9 +43,10 @@ class LinearClassifier(object):
         # Calculate the score for each class using the weights and
         # return the class y_pred with the highest score.
 
-        y_pred, class_scores = None, None
+
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        class_scores = x @ self.weights
+        y_pred = torch.argmax(class_scores, dim=1)
         # ========================
 
         return y_pred, class_scores
@@ -64,9 +66,10 @@ class LinearClassifier(object):
         # labels to the ground truth labels to obtain the accuracy (in %).
         # Do not use an explicit loop.
 
-        acc = None
+
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        correct_num = int(torch.eq(y, y_pred).sum())
+        acc = correct_num / y.shape[0]
         # ========================
 
         return acc * 100

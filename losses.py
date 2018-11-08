@@ -53,14 +53,35 @@ class SVMHingeLoss(ClassifierLoss):
         #   Hint: Create a matrix M where M[i,j] is the margin-loss
         #   for sample i and class j (i.e. s_j - s_{y_i} + delta).
 
-        loss = None
+
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        y.unsqueeze_(1)
+        # print("y", y.size())
+        num_class = x_scores.shape[1]
+        y_expended = y.expand(-1, num_class)
+        # print(y_expended.size())
+        s_yi = torch.gather(x_scores, dim=1, index=y_expended)
+        print("s_yi[0][0]", s_yi[0][0])
+        print("y[0]", y[0])
+        print("x_scores[0][y[0]]", x_scores[0][y[0]])
+        m = x_scores - s_yi + self.delta
+        # print("type m", m.type())
+        m_max = torch.max(m, torch.FloatTensor([0]).expand_as(m))
+        l_iw = torch.sum(m_max, dim=1) - self.delta
+        print("m_max[0][0]", m_max[0][0])
+        print("x_scores[0][0] - x_scores[0][y[0]] + self.delta", x_scores[0][0] - x_scores[0][y[0]] + self.delta)
+
+        i, j = 0, 5
+        print("m_max[i][j]", m_max[i][j])
+        print("x_scores[i][j] - x_scores[i][y[i]] + self.delta", x_scores[i][j] - x_scores[i][y[i]] + self.delta)
+        print("diff", m_max[i][j] - (x_scores[i][j] - x_scores[i][y[i]] + self.delta))
+        loss = l_iw.sum() / y.shape[0]
+
         # ========================
 
         # TODO: Save what you need for gradient calculation in self.grad_ctx
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        # raise NotImplementedError()
         # ========================
 
         return loss
