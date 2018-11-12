@@ -55,33 +55,23 @@ class SVMHingeLoss(ClassifierLoss):
 
 
         # ====== YOUR CODE: ======
-        y.unsqueeze_(1)
-        # print("y", y.size())
+        y1 = y.unsqueeze(1)
         num_class = x_scores.shape[1]
-        y_expended = y.expand(-1, num_class)
-        # print(y_expended.size())
+        y_expended = y1.expand(-1, num_class)
         s_yi = torch.gather(x_scores, dim=1, index=y_expended)
-        print("s_yi[0][0]", s_yi[0][0])
-        print("y[0]", y[0])
-        print("x_scores[0][y[0]]", x_scores[0][y[0]])
         m = x_scores - s_yi + self.delta
-        # print("type m", m.type())
         m_max = torch.max(m, torch.FloatTensor([0]).expand_as(m))
         l_iw = torch.sum(m_max, dim=1) - self.delta
-        print("m_max[0][0]", m_max[0][0])
-        print("x_scores[0][0] - x_scores[0][y[0]] + self.delta", x_scores[0][0] - x_scores[0][y[0]] + self.delta)
-
-        i, j = 0, 5
-        print("m_max[i][j]", m_max[i][j])
-        print("x_scores[i][j] - x_scores[i][y[i]] + self.delta", x_scores[i][j] - x_scores[i][y[i]] + self.delta)
-        print("diff", m_max[i][j] - (x_scores[i][j] - x_scores[i][y[i]] + self.delta))
-        loss = l_iw.sum() / y.shape[0]
+        loss = l_iw.sum() / y1.shape[0]
 
         # ========================
 
         # TODO: Save what you need for gradient calculation in self.grad_ctx
         # ====== YOUR CODE: ======
-        # raise NotImplementedError()
+        self.grad_ctx['x'] = x
+        self.grad_ctx['m'] = m
+        self.grad_ctx['y'] = y1
+
         # ========================
 
         return loss
@@ -91,10 +81,20 @@ class SVMHingeLoss(ClassifierLoss):
         # TODO: Implement SVM loss gradient calculation
         # Same notes as above. Hint: Use the matrix M from above, based on
         # it create a matrix G such that X^T * G is the gradient.
-
-        grad = None
+        x = self.grad_ctx['x']
+        m = self.grad_ctx['m']
+        y = self.grad_ctx['y']
+        n = x.shape[0]
+        c = m.shape[1]
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        yi_eq = torch.zeros(n, c).scatter_(1, y, 1).byte()
+        yi_neq = yi_eq ^ 1
+        m_gr = m > 0
+        sum_m_gr = torch.sum(m_gr, dim=1, keepdim=True).float() - 1.0
+        sum_m_gr = sum_m_gr.expand(-1, c)
+        g = (m_gr.float() * yi_neq.float()) - (sum_m_gr * yi_eq.float())
+        g = g * (1 / n)
+        grad = x.t() @ g
         # ========================
 
         return grad
