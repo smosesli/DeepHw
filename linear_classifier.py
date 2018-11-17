@@ -18,13 +18,13 @@ class LinearClassifier(object):
         self.n_features = n_features
         self.n_classes = n_classes
 
-        # TODO: Create weights tensor of appropriate dimensions
+        # DONE: Create weights tensor of appropriate dimensions
         # Initialize it from a normal dist with zero mean and the given std.
 
 
         # ====== YOUR CODE: ======
 
-        self.weights = torch.randn(n_features, n_classes,) * weight_std
+        self.weights = torch.randn(n_features, n_classes) * weight_std
         # ========================
 
     def predict(self, x: Tensor):
@@ -39,7 +39,7 @@ class LinearClassifier(object):
                 per sample.
         """
 
-        # TODO: Implement linear prediction.
+        # DONE: Implement linear prediction.
         # Calculate the score for each class using the weights and
         # return the class y_pred with the highest score.
 
@@ -61,7 +61,7 @@ class LinearClassifier(object):
         :return: The accuracy in percent.
         """
 
-        # TODO: calculate accuracy of prediction.
+        # DONE: calculate accuracy of prediction.
         # Use the predict function above and compare the predicted class
         # labels to the ground truth labels to obtain the accuracy (in %).
         # Do not use an explicit loop.
@@ -98,11 +98,41 @@ class LinearClassifier(object):
             # Don't forget to add a regularization term to the loss, using the
             # weight_decay parameter.
 
-            total_correct = 0
-            average_loss = 0
-
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            # Train stage
+            average_loss = 0
+            average_acc = 0
+
+            for batch, data in enumerate(dl_train):
+                x, y = data
+                y_pred, x_scores = self.predict(x)
+                term1 = loss_fn(x, y, x_scores, y_pred)
+                term2 = (weight_decay/2) * torch.sum(torch.mul(self.weights, self.weights))
+                average_loss += (term1 + term2) * y.shape[0]
+                average_acc = self.evaluate_accuracy(y, y_pred) * y.shape[0]
+                grad_w = loss_fn.grad() + weight_decay * self.weights
+                self.weights = self.weights - learn_rate * grad_w
+            average_loss /= len(dl_train.dataset)
+            average_acc /= len(dl_train.dataset)
+            train_res.loss.append(average_loss)
+            train_res.accuracy.append(average_acc)
+
+            # Validation stage
+            average_loss = 0
+            average_acc = 0
+
+            for batch, data in enumerate(dl_valid):
+                x, y = data
+                y_pred, x_scores = self.predict(x)
+                term1 = loss_fn(x, y, x_scores, y_pred)
+                term2 = (weight_decay/2) * torch.sum(torch.mul(self.weights, self.weights))
+                average_loss += (term1 + term2) * y.shape[0]
+                average_acc = self.evaluate_accuracy(y, y_pred) * y.shape[0]
+            average_loss /= len(dl_valid.dataset)
+            average_acc /= len(dl_valid.dataset)
+            valid_res.loss.append(average_loss)
+            valid_res.accuracy.append(average_acc)
+
             # ========================
             print('.', end='')
 
@@ -122,7 +152,11 @@ class LinearClassifier(object):
         # The output shape should be (n_classes, C, H, W).
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        weights = self.weights.t()
+        if has_bias:
+            weights = weights.narrow(1, 0, weights.shape[1]-1)
+        C, H, W = img_shape
+        w_images = weights.view(-1, C, H, W)
         # ========================
 
         return w_images
